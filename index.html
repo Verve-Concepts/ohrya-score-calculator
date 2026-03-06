@@ -387,11 +387,10 @@
             <div class="constants">
                 <div class="constants-title">Constants:</div>
                 <span class="constant-item">α = 1</span>
-                <span class="constant-item">β = 1</span>
-                <span class="constant-item">Ws1 = 1</span>
-                <span class="constant-item">Wd = 1.5</span>
-                <span class="constant-item">Ws2 = 0.5</span>
-                <span class="constant-item">Ws3 = 0.25</span>
+                <span class="constant-item">Ws1 = 3</span>
+                <span class="constant-item">Wd = 30</span>
+                <span class="constant-item">Ws2 = 1.5</span>
+                <span class="constant-item">Ws3 = 0.75</span>
             </div>
         </div>
 
@@ -404,7 +403,7 @@
             <div class="result-item">
                 <div>
                     <div class="result-label">Sign-up Conversion Rate (SCR)</div>
-                    <div class="formula">SCR = (Sign-ups + α) / (Clicks + α + β)</div>
+                    <div class="formula">SCR = (Sign-ups + 1) / (Clicks + 1)</div>
                 </div>
                 <div class="result-value" id="scr">0</div>
             </div>
@@ -412,7 +411,7 @@
             <div class="result-item">
                 <div>
                     <div class="result-label">Donation Conversion Rate (DCR)</div>
-                    <div class="formula">DCR = (Donations + α) / (Sign-ups + α + β)</div>
+                    <div class="formula">DCR = (Donations + 1) / (Sign-ups + 1)</div>
                 </div>
                 <div class="result-value" id="dcr">0</div>
             </div>
@@ -420,20 +419,44 @@
             <div class="result-item">
                 <div>
                     <div class="result-label">Base Score</div>
-                    <div class="formula">Score = Ws1 × SCR + Wd × DCR</div>
+                    <div class="formula">Base Score = (3 × SCR) + (30 × DCR)</div>
                 </div>
                 <div class="result-value" id="score">0</div>
             </div>
 
             <div class="result-item">
                 <div>
+                    <div class="result-label">Efficiency</div>
+                    <div class="formula">Efficiency = (Sign-ups + Donations) / Clicks</div>
+                </div>
+                <div class="result-value" id="convEff">0</div>
+            </div>
+
+            <div class="result-item">
+                <div>
+                    <div class="result-label">Multiplier</div>
+                    <div class="formula">Multiplier = Efficiency ^ 0.5</div>
+                </div>
+                <div class="result-value" id="effBonus">0</div>
+            </div>
+
+            <div class="result-item">
+                <div>
+                    <div class="result-label">Log Volume</div>
+                    <div class="formula">Log Volume = log(1 + Sign-ups + Donations)</div>
+                </div>
+                <div class="result-value" id="logVolume">0</div>
+            </div>
+
+            <div class="result-item">
+                <div>
                     <div class="result-label">Main Score (MS)</div>
-                    <div class="formula">MS = Score × log(1 + Sign-ups + Donations)</div>
+                    <div class="formula">MS = Base Score × Log Volume × Multiplier</div>
                 </div>
                 <div class="result-value" id="ms">0</div>
             </div>
 
-            <div class="result-item" style="display: none;">
+            <div class="result-item">
                 <div>
                     <div class="result-label">Main Score Expanded (MSE)</div>
                     <div class="formula">MSE = MS × 100</div>
@@ -451,8 +474,8 @@
 
             <div class="result-item">
                 <div>
-                    <div class="result-label">S2C (Tier 2 Score)</div>
-                    <div class="formula">S2C = S2 Sign-ups × C2 × Ws2</div>
+                    <div class="result-label">S2 (Tier 2 Score)</div>
+                    <div class="formula">S2 = N2 × C2 × Ws2</div>
                 </div>
                 <div class="result-value" id="s2c">0</div>
             </div>
@@ -467,8 +490,8 @@
 
             <div class="result-item">
                 <div>
-                    <div class="result-label">S3C (Tier 3 Score)</div>
-                    <div class="formula">S3C = S3 Sign-ups × C3 × Ws3</div>
+                    <div class="result-label">S3 (Tier 3 Score)</div>
+                    <div class="formula">S3 = N3 × C3 × Ws3</div>
                 </div>
                 <div class="result-value" id="s3c">0</div>
             </div>
@@ -476,7 +499,7 @@
             <div class="result-item final-score">
                 <div>
                     <div class="result-label">🏆 Final Score (FS)</div>
-                    <div class="formula">FS = MS + S2C + S3C</div>
+                    <div class="formula">FS = MSE + S2 + S3</div>
                 </div>
                 <div class="result-value" id="fs">0</div>
             </div>
@@ -558,26 +581,35 @@
             // Constants
             const alpha = 1;
             const beta = 1;
-            const ws1 = 1;
-            const wd = 1.5;
-            const ws2 = 0.5;
-            const ws3 = 0.25;
+            const ws1 = 3;
+            const wd = 30;
+            const ws2 = 1.5;
+            const ws3 = 0.75;
 
             // Calculate Conversion Factors
             const c2 = signups > 0 ? s2signups / signups : 0;
             const c3 = s2signups > 0 ? s3signups / s2signups : 0;
 
-            // Calculate SCR (Sign-up Conversion Rate)
-            const scr = (signups + alpha) / (clicks + alpha + beta);
+            // Calculate SCR (Sign-up Conversion Rate) with smoothing
+            const scr = (signups + alpha) / (clicks + alpha);
 
-            // Calculate DCR (Donation Conversion Rate)
-            const dcr = (donations + alpha) / (signups + alpha + beta);
+            // Calculate DCR (Donation Conversion Rate) with smoothing
+            const dcr = (donations + alpha) / (signups + alpha);
 
             // Calculate Base Score
             const score = ws1 * scr + wd * dcr;
 
+            // Calculate Efficiency
+            const convEff = clicks > 0 ? (signups + donations) / clicks : 0;
+
+            // Calculate Multiplier
+            const effBonus = Math.pow(convEff, 0.5);
+
+            // Calculate Log Volume
+            const logVolume = Math.log(1 + signups + donations);
+
             // Calculate Main Score (MS)
-            const ms = score * Math.log(1 + signups + donations);
+            const ms = score * logVolume * effBonus;
 
             // Calculate Main Score Expanded (MSE)
             const mse = ms * 100;
@@ -589,14 +621,17 @@
             const s3c = s3signups * c3 * ws3;
 
             // Calculate Final Score
-            const fs = ms + s2c + s3c;
+            const fs = mse + s2c + s3c;
 
             // Display results
             document.getElementById('scr').textContent = scr.toFixed(4);
             document.getElementById('dcr').textContent = dcr.toFixed(4);
             document.getElementById('score').textContent = score.toFixed(4);
+            document.getElementById('convEff').textContent = convEff.toFixed(4);
+            document.getElementById('effBonus').textContent = effBonus.toFixed(4);
+            document.getElementById('logVolume').textContent = logVolume.toFixed(4);
             document.getElementById('ms').textContent = ms.toFixed(6);
-            document.getElementById('mse').textContent = mse.toFixed(2);
+            document.getElementById('mse').textContent = mse.toFixed(4);
             document.getElementById('c2').textContent = c2.toFixed(2);
             document.getElementById('s2c').textContent = s2c.toFixed(2);
             document.getElementById('c3').textContent = c3.toFixed(2);
@@ -763,8 +798,8 @@
                 scenario.dcr,
                 scenario.c2,
                 scenario.c3,
-                parseFloat(scenario.s2) * parseFloat(scenario.c2) * 0.5,
-                parseFloat(scenario.s3) * parseFloat(scenario.c3) * 0.25,
+                parseFloat(scenario.s2) * parseFloat(scenario.c2) * 1.5,
+                parseFloat(scenario.s3) * parseFloat(scenario.c3) * 0.75,
                 scenario.finalScore,
                 scenario.timestamp || 'N/A'
             ]);
