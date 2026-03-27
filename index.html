@@ -402,8 +402,16 @@
             
             <div class="result-item">
                 <div>
+                    <div class="result-label">ClickNew</div>
+                    <div class="formula">ClickNew = Clicks + 50</div>
+                </div>
+                <div class="result-value" id="clickNew">0</div>
+            </div>
+
+            <div class="result-item">
+                <div>
                     <div class="result-label">Sign-up Conversion Rate (SCR)</div>
-                    <div class="formula">SCR = (Sign-ups + 1) / (Clicks + 1)</div>
+                    <div class="formula">SCR = (Sign-ups + 1) / (ClickNew + 1)</div>
                 </div>
                 <div class="result-value" id="scr">0</div>
             </div>
@@ -427,7 +435,7 @@
             <div class="result-item">
                 <div>
                     <div class="result-label">Efficiency</div>
-                    <div class="formula">Efficiency = (Sign-ups + Donations) / Clicks</div>
+                    <div class="formula">Efficiency = (Sign-ups + Donations) / ClickNew</div>
                 </div>
                 <div class="result-value" id="convEff">0</div>
             </div>
@@ -590,8 +598,11 @@
             const c2 = signups > 0 ? s2signups / signups : 0;
             const c3 = s2signups > 0 ? s3signups / s2signups : 0;
 
+            // Calculate ClickNew
+            const clickNew = clicks + 50;
+
             // Calculate SCR (Sign-up Conversion Rate) with smoothing
-            const scr = (signups + alpha) / (clicks + alpha);
+            const scr = (signups + alpha) / (clickNew + alpha);
 
             // Calculate DCR (Donation Conversion Rate) with smoothing
             const dcr = (donations + alpha) / (signups + alpha);
@@ -600,7 +611,7 @@
             const score = ws1 * scr + wd * dcr;
 
             // Calculate Efficiency
-            const convEff = clicks > 0 ? (signups + donations) / clicks : 0;
+            const convEff = clickNew > 0 ? (signups + donations) / clickNew : 0;
 
             // Calculate Multiplier
             const effBonus = Math.pow(convEff, 0.5);
@@ -624,6 +635,7 @@
             const fs = mse + s2c + s3c;
 
             // Display results
+            document.getElementById('clickNew').textContent = clickNew.toFixed(0);
             document.getElementById('scr').textContent = scr.toFixed(4);
             document.getElementById('dcr').textContent = dcr.toFixed(4);
             document.getElementById('score').textContent = score.toFixed(4);
